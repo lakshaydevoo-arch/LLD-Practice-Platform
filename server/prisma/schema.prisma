@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String
+  createdAt DateTime  @default(now())
+  attempts  Attempt[]
+
+  @@map("users")
+}
+
+model Problem {
+  id                     String    @id @default(uuid())
+  slug                   String    @unique
+  title                  String
+  difficulty             String    // EASY, MEDIUM, HARD
+  timeEstimate           String    // e.g. "20-25 min"
+  shortDescription       String
+  requirements           String    // JSON array of strings
+  functionalRequirements String    // JSON array of strings
+  expectedEntities       String    // JSON array of string entity hints
+  expectedBehaviours     String    // JSON array of strings
+  constraints            String    // JSON array of strings
+  concepts               String    // JSON array of patterns/concepts
+  createdAt              DateTime  @default(now())
+  attempts               Attempt[]
+
+  @@map("problems")
+}
+
+model Attempt {
+  id         String      @id @default(uuid())
+  problemId  String
+  userId     String
+  status     String      @default("DRAFT") // DRAFT, SUBMITTED, EVALUATING, EVALUATED, FAILED
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  problem    Problem     @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  solution   Solution?
+  evaluation Evaluation?
+
+  @@map("attempts")
+}
+
+model Solution {
+  id           String                @id @default(uuid())
+  attemptId    String                @unique
+  patterns     String                // JSON array of pattern names
+  explanation  String
+  optionalCode String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  attempt      Attempt               @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  classes      ClassDefinition[]
+  interfaces   InterfaceDefinition[]
+  relationships Relationship[]
+  methods      MethodDefinition[]
+
+  @@map("solutions")
+}
+
+model ClassDefinition {
+  id             String   @id @default(uuid())
+  solutionId     String
+  name           String
+  responsibility String
+  attributes     String   // JSON array of attribute strings
+  solution       Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+
+  @@map("class_definitions")
+}
+
+model InterfaceDefinition {
+  id             String   @id @default(uuid())
+  solutionId     String
+  name           String
+  responsibility String
+  methods        String   // JSON array of method signature strings
+  solution       Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+
+  @@map("interface_definitions")
+}
+
+model Relationship {
+  id         String   @id @default(uuid())
+  solutionId String
+  fromEntity String
+  type       String   // ASSOCIATION, AGGREGATION, COMPOSITION, INHERITANCE, DEPENDENCY
+  toEntity   String
+  solution   Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+
+  @@map("relationships")
+}
+
+model MethodDefinition {
+  id         String   @id @default(uuid())
+  solutionId String
+  name       String
+  ownerClass String
+  purpose    String
+  inputs     String   // JSON array of parameter strings
+  output     String
+  solution   Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+
+  @@map("method_definitions")
+}
+
+model Evaluation {
+  id           String                @id @default(uuid())
+  attemptId    String                @unique
+  overallScore Float
+  providerUsed String                // MOCK, LLM_OPENAI, LLM_GEMINI, etc.
+  createdAt    DateTime              @default(now())
+  attempt      Attempt               @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  dimensions   EvaluationDimension[]
+  feedbackItems FeedbackItem[]
+
+  @@map("evaluations")
+}
+
+model EvaluationDimension {
+  id           String     @id @default(uuid())
+  evaluationId String
+  name         String     // e.g. "Responsibility & Cohesion"
+  score        Float      // 0-10
+  weight       Float      // e.g. 0.20
+  reasoning    String
+  suggestions  String     // JSON array of strings
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  @@map("evaluation_dimensions")
+}
+
+model FeedbackItem {
+  id           String     @id @default(uuid())
+  evaluationId String
+  type         String     // STRENGTH, WARNING, CRITICAL, SUGGESTION
+  category     String     // COUPLING, COHESION, ABSTRACTION, EXTENSIBILITY, SOLID, PATTERN
+  problem      String
+  whyItMatters String
+  suggestion   String
+  example      String?
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  @@map("feedback_items")
+}

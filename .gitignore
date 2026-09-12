@@ -1,0 +1,62 @@
+# Environment variables and secrets
+.env
+.env.*
+*.env
+!*.env.example
+server/.env
+client/.env
+
+# Dependencies
+node_modules/
+server/node_modules/
+client/node_modules/
+.pnpm-store/
+
+# Build artifacts
+dist/
+build/
+server/dist/
+client/dist/
+
+# SQLite databases & local persistence
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+server/dev.db
+server/dev.db-journal
+server/prisma/*.db
+server/prisma/*.db-journal
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Operating System & IDE metadata
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Vite & Vitest cache / timestamps
+.vite/
+*.tsbuildinfo
+vite.config.ts.timestamp*
+vitest.config.ts.timestamp*
+coverage/
+.nyc_output/
